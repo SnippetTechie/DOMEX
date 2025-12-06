@@ -1,0 +1,14 @@
+node_modules/
+.DS_Store
+.env
+.env.local
+.vscode/settings.json
+dist/
+build/
+out/
+.next/
+.yarn/
+.cache/
+*.lock
+pnpm-lock.yaml
+yarn.lock
