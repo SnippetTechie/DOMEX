@@ -4,7 +4,7 @@ import { ethers } from "ethers";
 import { useSDK, useAddress } from "@thirdweb-dev/react";
 import { useFlareSmartAccount } from "@/hooks/useFlareSmartAccount";
 import Navbar from "@/components/Navbar";
-import { Box, Button, Flex, Spinner, useToast } from "@chakra-ui/react";
+import { Box, Button, Flex, Spinner, useToast, Text, VStack, HStack, Grid } from "@chakra-ui/react";
 
 export default function SmartAccountPage() {
   const address = useAddress();
@@ -237,158 +237,244 @@ export default function SmartAccountPage() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <Navbar />
+      <Box minH="100vh">
+        <Navbar />
 
-      <Flex direction="column" align="center" justify="flex-start" minH="100vh" bg="gray.50" py="8">
-        <Box
-          maxW="600px"
-          w="full"
-          px="6"
-          py="8"
-          bg="white"
-          rounded="xl"
-          boxShadow="lg"
-        >
-          <h2 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "20px" }}>
-            Flare Smart Account
-          </h2>
+        <Flex direction="column" align="center" justify="flex-start" minH="calc(100vh - 80px)" py="10" px="5">
+          <VStack spacing="6" w="full" maxW="800px">
+            {/* Header */}
+            <VStack spacing="2" textAlign="center">
+              <Text
+                fontSize={{ base: "3xl", md: "4xl" }}
+                fontWeight="800"
+                bgGradient="linear(to-r, #6495ED, #88b8ff)"
+                bgClip="text"
+                letterSpacing="tight"
+              >
+                Flare Smart Account
+              </Text>
+              <Text fontSize="md" color="gray.400" fontWeight="500">
+                Manage your smart contract account
+              </Text>
+            </VStack>
 
-          <div style={{ marginBottom: "20px", padding: "15px", backgroundColor: "#f7fafc", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-            <p style={{ marginBottom: "8px" }}>
-              <strong>Smart Account:</strong>
-              <br />
-              <code style={{ fontSize: "12px", wordBreak: "break-all" }}>{smartAccountAddress}</code>
-            </p>
-            <p style={{ marginBottom: "8px" }}>
-              <strong>Owner:</strong> {owner || "Loading..."}
-            </p>
-            <p style={{ marginBottom: "8px" }}>
-              <strong>Balance:</strong> <span style={{ fontSize: "18px", fontWeight: "bold", color: "#22543d" }}>{balance} FLR</span>
-            </p>
-            <p style={{ marginBottom: "8px" }}>
-              <strong>Nonce:</strong> {nonce}
-            </p>
-            <p style={{ marginBottom: "0" }}>
-              <strong>Connected Account:</strong>
-              <br />
-              <code style={{ fontSize: "12px", wordBreak: "break-all" }}>{address || "Not connected"}</code>
-            </p>
-            <p style={{ marginTop: "8px", marginBottom: "0" }}>
-              <strong>Contract Ready:</strong> {isReady ? "✓ Yes" : "✗ No"}
-            </p>
-          </div>
-
-          {error && (
-            <div style={{ padding: "12px", backgroundColor: "#fed7d7", borderRadius: "6px", marginBottom: "15px", color: "#c53030", border: "1px solid #fc8181" }}>
-              <strong>Error:</strong> {error}
-            </div>
-          )}
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "15px" }}>
-            <button
-              onClick={handleFundAccount}
-              disabled={loading}
-              style={{
-                padding: "12px",
-                backgroundColor: "#ff9800",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.6 : 1,
-                fontWeight: "500",
-              }}
+            {/* Account Info Card */}
+            <Box
+              w="full"
+              bg="rgba(15, 20, 40, 0.7)"
+              backdropFilter="blur(20px)"
+              borderRadius="3xl"
+              borderWidth="1px"
+              borderColor="rgba(100, 149, 237, 0.2)"
+              boxShadow="0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 0 20px rgba(100, 149, 237, 0.05)"
+              p={{ base: "6", md: "8" }}
             >
-              {loading ? "Loading..." : "Fund Account"}
-            </button>
+              <VStack spacing="5" align="stretch">
+                <Text fontSize="2xl" fontWeight="700" color="white">
+                  Account Details
+                </Text>
 
-            <button
-              onClick={handleExecute}
-              disabled={loading}
-              style={{
-                padding: "12px",
-                backgroundColor: "#4caf50",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.6 : 1,
-                fontWeight: "500",
-              }}
-            >
-              {loading ? "Loading..." : "Execute Tx"}
-            </button>
+                <VStack spacing="4" align="stretch">
+                  <Box
+                    p="4"
+                    bg="rgba(100, 149, 237, 0.1)"
+                    borderRadius="xl"
+                    borderWidth="1px"
+                    borderColor="rgba(100, 149, 237, 0.2)"
+                  >
+                    <Text fontSize="sm" color="gray.400" fontWeight="600" mb="2">
+                      Smart Account Address
+                    </Text>
+                    <Text
+                      fontSize="sm"
+                      fontFamily="monospace"
+                      color="#6495ED"
+                      wordBreak="break-all"
+                      fontWeight="600"
+                    >
+                      {smartAccountAddress}
+                    </Text>
+                  </Box>
 
-            <button
-              onClick={handleAuthorizeSigner}
-              disabled={loading}
-              style={{
-                padding: "12px",
-                backgroundColor: "#2196f3",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.6 : 1,
-                fontWeight: "500",
-              }}
-            >
-              {loading ? "Loading..." : "Authorize Signer"}
-            </button>
+                  <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap="4">
+                    <Box
+                      p="4"
+                      bg="rgba(100, 149, 237, 0.05)"
+                      borderRadius="xl"
+                      borderWidth="1px"
+                      borderColor="rgba(100, 149, 237, 0.1)"
+                    >
+                      <Text fontSize="sm" color="gray.400" fontWeight="600" mb="2">
+                        Balance
+                      </Text>
+                      <Text fontSize="2xl" fontWeight="700" color="#6495ED">
+                        {balance} FLR
+                      </Text>
+                    </Box>
 
-            <button
-              onClick={handleRevokeSigner}
-              disabled={loading}
-              style={{
-                padding: "12px",
-                backgroundColor: "#f44336",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.6 : 1,
-                fontWeight: "500",
-              }}
-            >
-              {loading ? "Loading..." : "Revoke Signer"}
-            </button>
+                    <Box
+                      p="4"
+                      bg="rgba(100, 149, 237, 0.05)"
+                      borderRadius="xl"
+                      borderWidth="1px"
+                      borderColor="rgba(100, 149, 237, 0.1)"
+                    >
+                      <Text fontSize="sm" color="gray.400" fontWeight="600" mb="2">
+                        Nonce
+                      </Text>
+                      <Text fontSize="2xl" fontWeight="700" color="#6495ED">
+                        {nonce}
+                      </Text>
+                    </Box>
+                  </Grid>
 
-            <button
-              onClick={handleCheckSigner}
-              disabled={loading}
-              style={{
-                padding: "12px",
-                backgroundColor: "#ff9800",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.6 : 1,
-                fontWeight: "500",
-              }}
-            >
-              {loading ? "Loading..." : "Check Signer"}
-            </button>
+                  <Box
+                    p="4"
+                    bg="rgba(100, 149, 237, 0.05)"
+                    borderRadius="xl"
+                    borderWidth="1px"
+                    borderColor="rgba(100, 149, 237, 0.1)"
+                  >
+                    <Text fontSize="sm" color="gray.400" fontWeight="600" mb="2">
+                      Owner Address
+                    </Text>
+                    <Text
+                      fontSize="sm"
+                      fontFamily="monospace"
+                      color="white"
+                      wordBreak="break-all"
+                    >
+                      {owner || "Loading..."}
+                    </Text>
+                  </Box>
 
-            <button
-              onClick={handleRefresh}
-              disabled={loading}
-              style={{
-                padding: "12px",
-                backgroundColor: "#9c27b0",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.6 : 1,
-                fontWeight: "500",
-              }}
-            >
-              {loading ? "Loading..." : "Refresh"}
-            </button>
-          </div>
-        </Box>
-      </Flex>
+                  <HStack justify="space-between" p="4" bg="rgba(100, 149, 237, 0.05)" borderRadius="xl">
+                    <Text fontSize="sm" color="gray.400" fontWeight="600">
+                      Contract Status
+                    </Text>
+                    <HStack>
+                      <Box
+                        w="2"
+                        h="2"
+                        borderRadius="full"
+                        bg={isReady ? "#4ade80" : "#ef4444"}
+                        boxShadow={isReady ? "0 0 10px #4ade80" : "0 0 10px #ef4444"}
+                      />
+                      <Text fontSize="sm" fontWeight="600" color={isReady ? "#4ade80" : "#ef4444"}>
+                        {isReady ? "Ready" : "Not Ready"}
+                      </Text>
+                    </HStack>
+                  </HStack>
+                </VStack>
+
+                {error && (
+                  <Box
+                    p="4"
+                    bg="rgba(239, 68, 68, 0.1)"
+                    borderRadius="xl"
+                    borderWidth="1px"
+                    borderColor="rgba(239, 68, 68, 0.3)"
+                  >
+                    <Text fontSize="sm" color="#ef4444" fontWeight="600">
+                      Error: {error}
+                    </Text>
+                  </Box>
+                )}
+
+                <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap="3">
+                  <Button
+                    onClick={handleFundAccount}
+                    isDisabled={loading}
+                    h="12"
+                    bgGradient="linear(135deg, #6495ED 0%, #4a7dd9 100%)"
+                    color="white"
+                    _hover={{
+                      transform: "translateY(-2px)",
+                      boxShadow: "0 0 20px rgba(100, 149, 237, 0.5)",
+                    }}
+                  >
+                    {loading ? <Spinner size="sm" /> : "Fund Account"}
+                  </Button>
+
+                  <Button
+                    onClick={handleExecute}
+                    isDisabled={loading}
+                    h="12"
+                    bgGradient="linear(135deg, #4ade80 0%, #22c55e 100%)"
+                    color="white"
+                    _hover={{
+                      transform: "translateY(-2px)",
+                      boxShadow: "0 0 20px rgba(74, 222, 128, 0.5)",
+                    }}
+                  >
+                    {loading ? <Spinner size="sm" /> : "Execute Transaction"}
+                  </Button>
+
+                  <Button
+                    onClick={handleAuthorizeSigner}
+                    isDisabled={loading}
+                    h="12"
+                    bg="rgba(100, 149, 237, 0.2)"
+                    color="#6495ED"
+                    borderWidth="1px"
+                    borderColor="rgba(100, 149, 237, 0.3)"
+                    _hover={{
+                      bg: "rgba(100, 149, 237, 0.3)",
+                      transform: "translateY(-2px)",
+                    }}
+                  >
+                    {loading ? <Spinner size="sm" /> : "Authorize Signer"}
+                  </Button>
+
+                  <Button
+                    onClick={handleRevokeSigner}
+                    isDisabled={loading}
+                    h="12"
+                    bgGradient="linear(135deg, #ef4444 0%, #dc2626 100%)"
+                    color="white"
+                    _hover={{
+                      transform: "translateY(-2px)",
+                      boxShadow: "0 0 20px rgba(239, 68, 68, 0.5)",
+                    }}
+                  >
+                    {loading ? <Spinner size="sm" /> : "Revoke Signer"}
+                  </Button>
+
+                  <Button
+                    onClick={handleCheckSigner}
+                    isDisabled={loading}
+                    h="12"
+                    bg="rgba(100, 149, 237, 0.2)"
+                    color="#6495ED"
+                    borderWidth="1px"
+                    borderColor="rgba(100, 149, 237, 0.3)"
+                    _hover={{
+                      bg: "rgba(100, 149, 237, 0.3)",
+                      transform: "translateY(-2px)",
+                    }}
+                  >
+                    {loading ? <Spinner size="sm" /> : "Check Signer"}
+                  </Button>
+
+                  <Button
+                    onClick={handleRefresh}
+                    isDisabled={loading}
+                    h="12"
+                    bgGradient="linear(135deg, #a855f7 0%, #9333ea 100%)"
+                    color="white"
+                    _hover={{
+                      transform: "translateY(-2px)",
+                      boxShadow: "0 0 20px rgba(168, 85, 247, 0.5)",
+                    }}
+                  >
+                    {loading ? <Spinner size="sm" /> : "Refresh"}
+                  </Button>
+                </Grid>
+              </VStack>
+            </Box>
+          </VStack>
+        </Flex>
+      </Box>
     </>
   );
 }

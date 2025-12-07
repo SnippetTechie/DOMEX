@@ -3,6 +3,7 @@ import "@/styles/globals.css";
 import { ChakraProvider } from "@chakra-ui/react";
 import { ThirdwebProvider } from "@thirdweb-dev/react";
 import type { AppProps } from "next/app";
+import theme from "@/theme";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
@@ -11,7 +12,7 @@ export default function App({ Component, pageProps }: AppProps) {
       activeChain={ACTIVE_CHAIN}
       supportedChains={[ACTIVE_CHAIN]}
     >
-      <ChakraProvider>
+      <ChakraProvider theme={theme}>
         <Component {...pageProps} />
       </ChakraProvider>
     </ThirdwebProvider>
