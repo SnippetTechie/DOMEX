@@ -1,7 +1,7 @@
 import Head from "next/head";
 import { useState } from "react";
 import { ethers } from "ethers";
-import { useToast } from "@chakra-ui/react";
+import { useToast, Box, VStack, Text, Grid, HStack, Button, Spinner, Flex } from "@chakra-ui/react";
 import Navbar from "@/components/Navbar";
 
 interface SwapResult {
@@ -42,14 +42,10 @@ export default function FAssetsSimulatorPage() {
 
   // Generate realistic gas fees (Flare Coston2 testnet)
   const generateGasFees = () => {
-    // Gas price: 25 Gwei (typical testnet)
     const gasPrice = ethers.BigNumber.from("25000000000"); // 25 Gwei
-
-    // Gas used: varies by operation (250k-350k gas for swaps)
     const gasUsed = ethers.BigNumber.from(
       250000 + Math.floor(Math.random() * 100000) // 250k-350k
     );
-
     const totalFeeWei = gasPrice.mul(gasUsed);
 
     return {
@@ -72,7 +68,6 @@ export default function FAssetsSimulatorPage() {
     reserveIn: ethers.BigNumber,
     reserveOut: ethers.BigNumber
   ): ethers.BigNumber => {
-    // Formula: amountOut = (amountIn * reserveOut) / (reserveIn + amountIn)
     const numerator = amountIn.mul(reserveOut);
     const denominator = reserveIn.add(amountIn);
     return numerator.div(denominator);
@@ -189,7 +184,7 @@ export default function FAssetsSimulatorPage() {
 
       toast({
         title: "Swap Successful",
-        description: `Swapped ${amount} fETH for ${amountOutFormatted} WFLR (Fee: ${totalFeeFlr} FLR)`,
+        description: `Swapped ${amount} fETH for ${amountOutFormatted} WFLR`,
         status: "success",
         duration: 5,
         isClosable: true,
@@ -216,8 +211,6 @@ export default function FAssetsSimulatorPage() {
 
       const amountWei = ethers.utils.parseEther(amount);
 
-      // Check balance
-      addLog(`📊 Checking balance: ${amount} WFLR`);
       if (userWFLR.lt(amountWei)) {
         addLog("❌ Insufficient WFLR balance!");
         toast({
@@ -229,16 +222,12 @@ export default function FAssetsSimulatorPage() {
         });
         return;
       }
-      addLog(`✓ Balance check passed`);
 
-      // Approve step
+      addLog(`✓ Balance check passed`);
       addLog("\n1️⃣ Approval Step");
-      addLog(`Approving ${amount} WFLR for pool...`);
       await new Promise((resolve) => setTimeout(resolve, 500));
       addLog(`✓ Approval confirmed`);
 
-      // Calculate output
-      addLog("\n2️⃣ Calculating Swap Output");
       const amountOut = calculateSwapAmount(
         amountWei,
         poolState.wflrReserve,
@@ -246,41 +235,12 @@ export default function FAssetsSimulatorPage() {
       );
       const amountOutFormatted = ethers.utils.formatEther(amountOut);
 
-      addLog(`Input: ${amount} WFLR`);
-      addLog(`Output: ${amountOutFormatted} fETH`);
-
-      // Calculate metrics
-      const pricePerWFLR = amountOut.mul(ethers.BigNumber.from(10).pow(18)).div(amountWei);
-      const pricePerWFLRFormatted = ethers.utils.formatEther(pricePerWFLR);
-
-      const spotPrice = poolState.fethReserve.mul(ethers.BigNumber.from(10).pow(18)).div(poolState.wflrReserve);
-      const spotPriceFormatted = ethers.utils.formatEther(spotPrice);
-
-      const priceImpact = spotPrice.sub(pricePerWFLR).mul(10000).div(spotPrice);
-      const priceImpactFormatted = priceImpact.toNumber() / 100;
-
-      addLog(`\nExecution Price: ${pricePerWFLRFormatted} fETH per WFLR`);
-      addLog(`Spot Price: ${spotPriceFormatted} fETH per WFLR`);
-      addLog(`Price Impact: ${priceImpactFormatted.toFixed(2)}%`);
-
-      // Execute swap
-      addLog("\n3️⃣ Executing Swap");
-      addLog("Broadcasting transaction...");
-      
-      // Generate gas fees
       const { gasPrice, gasUsed, totalFeeWei, gasPriceGwei, totalFeeFlr } = generateGasFees();
       const txHash = generateTxHash();
-      
-      addLog(`\n⛽ Gas Estimation:`);
-      addLog(`Gas Price: ${gasPriceGwei} Gwei`);
-      addLog(`Gas Used: ${gasUsed.toString()}`);
-      addLog(`Total Fee: ${totalFeeFlr} FLR`);
-      
+
       await new Promise((resolve) => setTimeout(resolve, 800));
       addLog(`✓ Transaction confirmed`);
-      addLog(`📍 Tx Hash: ${txHash}`);
 
-      // Update state
       const newPoolWFLR = poolState.wflrReserve.add(amountWei);
       const newPoolFETH = poolState.fethReserve.sub(amountOut);
       const newUserWFLR = userWFLR.sub(amountWei);
@@ -296,13 +256,10 @@ export default function FAssetsSimulatorPage() {
       setTotalFeesAccumulated(totalFeesAccumulated.add(totalFeeWei));
       setTxCount(txCount + 1);
 
-      addLog("\n✅ Swap Completed Successfully!");
-      addLog(`\n📈 Updated Pool State:`);
-      addLog(`fETH Reserve: ${ethers.utils.formatEther(newPoolFETH)}`);
-      addLog(`WFLR Reserve: ${ethers.utils.formatEther(newPoolWFLR)}`);
-      addLog(`\n👤 Your New Balance:`);
-      addLog(`fETH: ${ethers.utils.formatEther(newUserFETH)}`);
-      addLog(`WFLR: ${ethers.utils.formatEther(newUserWFLR)}`);
+      const pricePerWFLR = amountOut.mul(ethers.BigNumber.from(10).pow(18)).div(amountWei);
+      const spotPrice = poolState.fethReserve.mul(ethers.BigNumber.from(10).pow(18)).div(poolState.wflrReserve);
+      const priceImpact = spotPrice.sub(pricePerWFLR).mul(10000).div(spotPrice);
+      const priceImpactFormatted = priceImpact.toNumber() / 100;
 
       setSwapResult({
         amountIn: amount,
@@ -317,7 +274,7 @@ export default function FAssetsSimulatorPage() {
 
       toast({
         title: "Swap Successful",
-        description: `Swapped ${amount} WFLR for ${amountOutFormatted} fETH (Fee: ${totalFeeFlr} FLR)`,
+        description: `Swapped ${amount} WFLR for ${amountOutFormatted} fETH`,
         status: "success",
         duration: 5,
         isClosable: true,
@@ -335,441 +292,371 @@ export default function FAssetsSimulatorPage() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <Navbar />
+      <Box minH="100vh">
+        <Navbar />
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "flex-start",
-          minHeight: "100vh",
-          backgroundColor: "#f7fafc",
-          padding: "32px 16px",
-          gap: "24px",
-        }}
-      >
-        {/* Pool Status Card */}
-        <div
-          style={{
-            maxWidth: "700px",
-            width: "100%",
-            padding: "24px",
-            backgroundColor: "white",
-            borderRadius: "12px",
-            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-          }}
-        >
-          <h2 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "20px" }}>
-            📊 fAssets Pool Status
-          </h2>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "16px",
-              marginBottom: "20px",
-            }}
-          >
-            <div
-              style={{
-                padding: "12px",
-                backgroundColor: "#e3f2fd",
-                borderRadius: "8px",
-                border: "1px solid #90caf9",
-              }}
-            >
-              <p style={{ margin: "0 0 8px 0", fontSize: "12px", color: "#1976d2" }}>
-                fETH Reserve
-              </p>
-              <p
-                style={{
-                  margin: "0",
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  color: "#0d47a1",
-                }}
+        <Box minH="calc(100vh - 80px)" py="10" px="5">
+          <VStack spacing="6" maxW="900px" mx="auto">
+            {/* Header */}
+            <VStack spacing="2" textAlign="center">
+              <Text
+                fontSize={{ base: "3xl", md: "4xl" }}
+                fontWeight="800"
+                bgGradient="linear(to-r, #6495ED, #88b8ff)"
+                bgClip="text"
+                letterSpacing="tight"
               >
-                {ethers.utils.formatEther(poolState.fethReserve)}
-              </p>
-            </div>
-            <div
-              style={{
-                padding: "12px",
-                backgroundColor: "#f3e5f5",
-                borderRadius: "8px",
-                border: "1px solid #ce93d8",
-              }}
+                fAssets Simulator
+              </Text>
+              <Text fontSize="md" color="gray.400" fontWeight="500">
+                Test swaps in a simulated environment
+              </Text>
+            </VStack>
+
+            {/* Pool Status Card */}
+            <Box
+              w="full"
+              bg="rgba(15, 20, 40, 0.7)"
+              backdropFilter="blur(20px)"
+              borderRadius="3xl"
+              borderWidth="1px"
+              borderColor="rgba(100, 149, 237, 0.2)"
+              boxShadow="0 8px 32px 0 rgba(0, 0, 0, 0.37)"
+              p={{ base: "6", md: "8" }}
             >
-              <p style={{ margin: "0 0 8px 0", fontSize: "12px", color: "#7b1fa2" }}>
-                WFLR Reserve
-              </p>
-              <p
-                style={{
-                  margin: "0",
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  color: "#4a148c",
-                }}
+              <VStack spacing="5" align="stretch">
+                <Text fontSize="2xl" fontWeight="700" color="white">
+                  📊 Pool Status
+                </Text>
+
+                <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap="4">
+                  <Box
+                    p="6"
+                    bg="rgba(100, 149, 237, 0.1)"
+                    borderRadius="xl"
+                    borderWidth="1px"
+                    borderColor="rgba(100, 149, 237, 0.2)"
+                    textAlign="center"
+                  >
+                    <Text fontSize="sm" color="gray.400" fontWeight="600" mb="3">
+                      fETH Reserve
+                    </Text>
+                    <Text fontSize="3xl" fontWeight="700" color="#6495ED">
+                      {ethers.utils.formatEther(poolState.fethReserve)}
+                    </Text>
+                  </Box>
+
+                  <Box
+                    p="6"
+                    bg="rgba(100, 149, 237, 0.1)"
+                    borderRadius="xl"
+                    borderWidth="1px"
+                    borderColor="rgba(100, 149, 237, 0.2)"
+                    textAlign="center"
+                  >
+                    <Text fontSize="sm" color="gray.400" fontWeight="600" mb="3">
+                      WFLR Reserve
+                    </Text>
+                    <Text fontSize="3xl" fontWeight="700" color="#6495ED">
+                      {ethers.utils.formatEther(poolState.wflrReserve)}
+                    </Text>
+                  </Box>
+                </Grid>
+
+                <Box
+                  p="4"
+                  bg="rgba(100, 149, 237, 0.05)"
+                  borderRadius="xl"
+                  borderWidth="1px"
+                  borderColor="rgba(100, 149, 237, 0.1)"
+                >
+                  <Text fontSize="sm" color="gray.400" fontWeight="600">
+                    Current Price: <Text as="span" color="#6495ED" fontWeight="700">
+                      1 fETH = {(
+                        Number(ethers.utils.formatEther(poolState.wflrReserve)) /
+                        Number(ethers.utils.formatEther(poolState.fethReserve))
+                      ).toFixed(2)} WFLR
+                    </Text>
+                  </Text>
+                </Box>
+              </VStack>
+            </Box>
+
+            {/* User Balances Card */}
+            <Box
+              w="full"
+              bg="rgba(15, 20, 40, 0.7)"
+              backdropFilter="blur(20px)"
+              borderRadius="3xl"
+              borderWidth="1px"
+              borderColor="rgba(100, 149, 237, 0.2)"
+              boxShadow="0 8px 32px 0 rgba(0, 0, 0, 0.37)"
+              p={{ base: "6", md: "8" }}
+            >
+              <VStack spacing="5" align="stretch">
+                <Text fontSize="2xl" fontWeight="700" color="white">
+                  👤 Your Balances
+                </Text>
+
+                <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap="4">
+                  <Box
+                    p="6"
+                    bg="rgba(74, 222, 128, 0.1)"
+                    borderRadius="xl"
+                    borderWidth="1px"
+                    borderColor="rgba(74, 222, 128, 0.2)"
+                    textAlign="center"
+                  >
+                    <Text fontSize="sm" color="gray.400" fontWeight="600" mb="3">
+                      fETH
+                    </Text>
+                    <Text fontSize="3xl" fontWeight="700" color="#4ade80">
+                      {ethers.utils.formatEther(userFETH)}
+                    </Text>
+                  </Box>
+
+                  <Box
+                    p="6"
+                    bg="rgba(251, 146, 60, 0.1)"
+                    borderRadius="xl"
+                    borderWidth="1px"
+                    borderColor="rgba(251, 146, 60, 0.2)"
+                    textAlign="center"
+                  >
+                    <Text fontSize="sm" color="gray.400" fontWeight="600" mb="3">
+                      WFLR
+                    </Text>
+                    <Text fontSize="3xl" fontWeight="700" color="#fb923c">
+                      {ethers.utils.formatEther(userWFLR)}
+                    </Text>
+                  </Box>
+                </Grid>
+
+                <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap="3">
+                  <Button
+                    onClick={simulateSwapFETHForFLR}
+                    h="12"
+                    bgGradient="linear(135deg, #6495ED 0%, #4a7dd9 100%)"
+                    color="white"
+                    _hover={{
+                      transform: "translateY(-2px)",
+                      boxShadow: "0 0 20px rgba(100, 149, 237, 0.5)",
+                    }}
+                  >
+                    Swap fETH → WFLR
+                  </Button>
+
+                  <Button
+                    onClick={simulateSwapFLRForFETH}
+                    h="12"
+                    bgGradient="linear(135deg, #fb923c 0%, #f97316 100%)"
+                    color="white"
+                    _hover={{
+                      transform: "translateY(-2px)",
+                      boxShadow: "0 0 20px rgba(251, 146, 60, 0.5)",
+                    }}
+                  >
+                    Swap WFLR → fETH
+                  </Button>
+                </Grid>
+              </VStack>
+            </Box>
+
+            {/* Swap Result Card */}
+            {swapResult && (
+              <Box
+                w="full"
+                bg="rgba(74, 222, 128, 0.1)"
+                backdropFilter="blur(20px)"
+                borderRadius="3xl"
+                borderWidth="2px"
+                borderColor="rgba(74, 222, 128, 0.3)"
+                boxShadow="0 0 30px rgba(74, 222, 128, 0.2)"
+                p={{ base: "6", md: "8" }}
               >
-                {ethers.utils.formatEther(poolState.wflrReserve)}
-              </p>
-            </div>
-          </div>
+                <VStack spacing="5" align="stretch">
+                  <Text fontSize="2xl" fontWeight="700" color="#4ade80">
+                    ✅ Last Swap Result
+                  </Text>
 
-          <div
-            style={{
-              padding: "12px",
-              backgroundColor: "#f1f1f1",
-              borderRadius: "8px",
-              fontSize: "13px",
-              color: "#666",
-            }}
-          >
-            <strong>Price:</strong> 1 fETH = {(
-              Number(ethers.utils.formatEther(poolState.wflrReserve)) /
-              Number(ethers.utils.formatEther(poolState.fethReserve))
-            ).toFixed(2)}{" "}
-            WFLR
-          </div>
-        </div>
+                  <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap="4">
+                    <Box>
+                      <Text fontSize="sm" color="gray.400" fontWeight="600" mb="1">
+                        Amount In
+                      </Text>
+                      <Text fontSize="xl" fontWeight="700" color="white">
+                        {swapResult.amountIn}
+                      </Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.400" fontWeight="600" mb="1">
+                        Amount Out
+                      </Text>
+                      <Text fontSize="xl" fontWeight="700" color="white">
+                        {swapResult.amountOut}
+                      </Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.400" fontWeight="600" mb="1">
+                        Price Impact
+                      </Text>
+                      <Text fontSize="xl" fontWeight="700" color="white">
+                        {swapResult.priceImpact}
+                      </Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.400" fontWeight="600" mb="1">
+                        Gas Fee
+                      </Text>
+                      <Text fontSize="xl" fontWeight="700" color="#fb923c">
+                        ⛽ {swapResult.totalFee} FLR
+                      </Text>
+                    </Box>
+                  </Grid>
 
-        {/* User Balances Card */}
-        <div
-          style={{
-            maxWidth: "700px",
-            width: "100%",
-            padding: "24px",
-            backgroundColor: "white",
-            borderRadius: "12px",
-            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-          }}
-        >
-          <h2 style={{ fontSize: "20px", fontWeight: "bold", marginBottom: "16px" }}>
-            👤 Your Balances
-          </h2>
+                  <Box
+                    p="4"
+                    bg="rgba(100, 149, 237, 0.1)"
+                    borderRadius="xl"
+                    borderWidth="1px"
+                    borderColor="rgba(100, 149, 237, 0.2)"
+                  >
+                    <Text fontSize="sm" color="gray.400" fontWeight="600" mb="2">
+                      Transaction Hash
+                    </Text>
+                    <Text
+                      fontSize="xs"
+                      fontFamily="monospace"
+                      color="#6495ED"
+                      wordBreak="break-all"
+                    >
+                      {swapResult.txHash}
+                    </Text>
+                  </Box>
+                </VStack>
+              </Box>
+            )}
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "16px",
-              marginBottom: "16px",
-            }}
-          >
-            <div
-              style={{
-                padding: "12px",
-                backgroundColor: "#e8f5e9",
-                borderRadius: "8px",
-                border: "1px solid #81c784",
-              }}
-            >
-              <p style={{ margin: "0 0 8px 0", fontSize: "12px", color: "#2e7d32" }}>
-                fETH
-              </p>
-              <p
-                style={{
-                  margin: "0",
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  color: "#1b5e20",
-                }}
+            {/* Fee Summary */}
+            {txCount > 0 && (
+              <Box
+                w="full"
+                bg="rgba(168, 85, 247, 0.1)"
+                backdropFilter="blur(20px)"
+                borderRadius="3xl"
+                borderWidth="2px"
+                borderColor="rgba(168, 85, 247, 0.3)"
+                boxShadow="0 0 30px rgba(168, 85, 247, 0.2)"
+                p={{ base: "6", md: "8" }}
               >
-                {ethers.utils.formatEther(userFETH)}
-              </p>
-            </div>
-            <div
-              style={{
-                padding: "12px",
-                backgroundColor: "#fff3e0",
-                borderRadius: "8px",
-                border: "1px solid #ffb74d",
-              }}
-            >
-              <p style={{ margin: "0 0 8px 0", fontSize: "12px", color: "#e65100" }}>
-                WFLR
-              </p>
-              <p
-                style={{
-                  margin: "0",
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  color: "#bf360c",
-                }}
-              >
-                {ethers.utils.formatEther(userWFLR)}
-              </p>
-            </div>
-          </div>
+                <Text fontSize="2xl" fontWeight="700" color="#a855f7" mb="5">
+                  💰 Transaction Summary
+                </Text>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "10px",
-            }}
-          >
-            <button
-              onClick={simulateSwapFETHForFLR}
-              style={{
-                padding: "12px",
-                backgroundColor: "#2196f3",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontWeight: "500",
-              }}
-            >
-              Swap fETH → WFLR
-            </button>
-            <button
-              onClick={simulateSwapFLRForFETH}
-              style={{
-                padding: "12px",
-                backgroundColor: "#ff9800",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontWeight: "500",
-              }}
-            >
-              Swap WFLR → fETH
-            </button>
-          </div>
-        </div>
+                <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap="4">
+                  <Box
+                    p="6"
+                    bg="rgba(168, 85, 247, 0.1)"
+                    borderRadius="xl"
+                    borderWidth="1px"
+                    borderColor="rgba(168, 85, 247, 0.2)"
+                    textAlign="center"
+                  >
+                    <Text fontSize="sm" color="gray.400" fontWeight="600" mb="3">
+                      Total Transactions
+                    </Text>
+                    <Text fontSize="4xl" fontWeight="700" color="#a855f7">
+                      {txCount}
+                    </Text>
+                  </Box>
 
-        {/* Swap Result Card */}
-        {swapResult && (
-          <div
-            style={{
-              maxWidth: "700px",
-              width: "100%",
-              padding: "24px",
-              backgroundColor: "#e8f5e9",
-              borderRadius: "12px",
-              border: "2px solid #4caf50",
-            }}
-          >
-            <h2 style={{ fontSize: "18px", fontWeight: "bold", marginBottom: "16px" }}>
-              ✅ Last Swap Result
-            </h2>
+                  <Box
+                    p="6"
+                    bg="rgba(239, 68, 68, 0.1)"
+                    borderRadius="xl"
+                    borderWidth="1px"
+                    borderColor="rgba(239, 68, 68, 0.2)"
+                    textAlign="center"
+                  >
+                    <Text fontSize="sm" color="gray.400" fontWeight="600" mb="3">
+                      Total Fees Paid
+                    </Text>
+                    <Text fontSize="3xl" fontWeight="700" color="#ef4444">
+                      {ethers.utils.formatEther(totalFeesAccumulated)} FLR
+                    </Text>
+                  </Box>
+                </Grid>
+              </Box>
+            )}
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "16px",
-                marginBottom: "16px",
-              }}
+            {/* Transaction Logs */}
+            <Box
+              w="full"
+              bg="rgba(15, 20, 40, 0.7)"
+              backdropFilter="blur(20px)"
+              borderRadius="3xl"
+              borderWidth="1px"
+              borderColor="rgba(100, 149, 237, 0.2)"
+              boxShadow="0 8px 32px 0 rgba(0, 0, 0, 0.37)"
+              p={{ base: "6", md: "8" }}
             >
-              <div>
-                <p style={{ margin: "0", fontSize: "12px", color: "#666" }}>Amount In</p>
-                <p style={{ margin: "0", fontSize: "16px", fontWeight: "bold" }}>
-                  {swapResult.amountIn}
-                </p>
-              </div>
-              <div>
-                <p style={{ margin: "0", fontSize: "12px", color: "#666" }}>Amount Out</p>
-                <p style={{ margin: "0", fontSize: "16px", fontWeight: "bold" }}>
-                  {swapResult.amountOut}
-                </p>
-              </div>
-              <div>
-                <p style={{ margin: "0", fontSize: "12px", color: "#666" }}>Price Impact</p>
-                <p style={{ margin: "0", fontSize: "16px", fontWeight: "bold" }}>
-                  {swapResult.priceImpact}
-                </p>
-              </div>
-              <div>
-                <p style={{ margin: "0", fontSize: "12px", color: "#666" }}>Slippage</p>
-                <p style={{ margin: "0", fontSize: "16px", fontWeight: "bold" }}>
-                  {swapResult.slippage}
-                </p>
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "16px",
-                marginBottom: "16px",
-                padding: "12px",
-                backgroundColor: "#fff9c4",
-                borderRadius: "8px",
-                border: "1px solid #fbc02d",
-              }}
-            >
-              <div>
-                <p style={{ margin: "0", fontSize: "12px", color: "#f57f17" }}>Gas Used</p>
-                <p style={{ margin: "0", fontSize: "14px", fontWeight: "bold", color: "#f57f17" }}>
-                  {swapResult.gasUsed}
-                </p>
-              </div>
-              <div>
-                <p style={{ margin: "0", fontSize: "12px", color: "#f57f17" }}>Gas Price</p>
-                <p style={{ margin: "0", fontSize: "14px", fontWeight: "bold", color: "#f57f17" }}>
-                  {swapResult.gasPrice} Gwei
-                </p>
-              </div>
-              <div
-                style={{
-                  gridColumn: "1 / -1",
-                }}
-              >
-                <p style={{ margin: "0", fontSize: "12px", color: "#f57f17" }}>Transaction Fee</p>
-                <p style={{ margin: "0", fontSize: "18px", fontWeight: "bold", color: "#d32f2f" }}>
-                  ⛽ {swapResult.totalFee} FLR
-                </p>
-              </div>
-              <div
-                style={{
-                  gridColumn: "1 / -1",
-                  wordBreak: "break-all",
-                }}
-              >
-                <p style={{ margin: "0 0 8px 0", fontSize: "12px", color: "#666" }}>Transaction Hash</p>
-                <p
-                  style={{
-                    margin: "0",
-                    fontSize: "11px",
-                    fontFamily: "monospace",
-                    color: "#1976d2",
-                    backgroundColor: "#e3f2fd",
-                    padding: "8px",
-                    borderRadius: "4px",
+              <Flex justify="space-between" align="center" mb="5">
+                <Text fontSize="2xl" fontWeight="700" color="white">
+                  📋 Transaction Log
+                </Text>
+                <Button
+                  onClick={clearLogs}
+                  isDisabled={logs.length === 0}
+                  size="sm"
+                  bgGradient="linear(135deg, #ef4444 0%, #dc2626 100%)"
+                  color="white"
+                  _hover={{
+                    transform: "translateY(-1px)",
+                    boxShadow: "0 0 15px rgba(239, 68, 68, 0.5)",
                   }}
                 >
-                  {swapResult.txHash}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+                  Clear
+                </Button>
+              </Flex>
 
-        {/* Fee Summary Card */}
-        {txCount > 0 && (
-          <div
-            style={{
-              maxWidth: "700px",
-              width: "100%",
-              padding: "24px",
-              backgroundColor: "#fce4ec",
-              borderRadius: "12px",
-              border: "2px solid #e91e63",
-            }}
-          >
-            <h2 style={{ fontSize: "18px", fontWeight: "bold", marginBottom: "16px" }}>
-              💰 Total Transactions & Fees
-            </h2>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "16px",
-              }}
-            >
-              <div
-                style={{
-                  padding: "12px",
-                  backgroundColor: "#fff",
-                  borderRadius: "8px",
-                  border: "1px solid #e91e63",
+              <Box
+                bg="#0f1419"
+                borderRadius="xl"
+                p="4"
+                fontFamily="monospace"
+                fontSize="sm"
+                color="#4db8ff"
+                maxH="400px"
+                overflowY="auto"
+                borderWidth="1px"
+                borderColor="rgba(100, 149, 237, 0.2)"
+                css={{
+                  '&::-webkit-scrollbar': {
+                    width: '8px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    background: 'rgba(15, 20, 40, 0.5)',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: 'linear-gradient(180deg, #6495ED 0%, #4a7dd9 100%)',
+                    borderRadius: '10px',
+                  },
                 }}
               >
-                <p style={{ margin: "0", fontSize: "12px", color: "#c2185b" }}>Total Transactions</p>
-                <p style={{ margin: "0", fontSize: "24px", fontWeight: "bold", color: "#880e4f" }}>
-                  {txCount}
-                </p>
-              </div>
-              <div
-                style={{
-                  padding: "12px",
-                  backgroundColor: "#fff",
-                  borderRadius: "8px",
-                  border: "1px solid #e91e63",
-                }}
-              >
-                <p style={{ margin: "0", fontSize: "12px", color: "#c2185b" }}>Total Fees Paid</p>
-                <p style={{ margin: "0", fontSize: "20px", fontWeight: "bold", color: "#d32f2f" }}>
-                  {ethers.utils.formatEther(totalFeesAccumulated)} FLR
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Logs Card */}
-        <div
-          style={{
-            maxWidth: "700px",
-            width: "100%",
-            padding: "24px",
-            backgroundColor: "white",
-            borderRadius: "12px",
-            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "16px",
-            }}
-          >
-            <h2 style={{ fontSize: "18px", fontWeight: "bold", margin: "0" }}>
-              📋 Transaction Log
-            </h2>
-            <button
-              onClick={clearLogs}
-              disabled={logs.length === 0}
-              style={{
-                padding: "8px 16px",
-                backgroundColor: logs.length === 0 ? "#ccc" : "#f44336",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: logs.length === 0 ? "not-allowed" : "pointer",
-                fontSize: "12px",
-                fontWeight: "500",
-              }}
-            >
-              Clear
-            </button>
-          </div>
-
-          <div
-            style={{
-              backgroundColor: "#263238",
-              color: "#4db8ff",
-              padding: "16px",
-              borderRadius: "6px",
-              fontFamily: "monospace",
-              fontSize: "13px",
-              lineHeight: "1.6",
-              maxHeight: "400px",
-              overflowY: "auto",
-              border: "1px solid #455a64",
-            }}
-          >
-            {logs.length === 0 ? (
-              <p style={{ color: "#888", margin: "0" }}>Logs will appear here...</p>
-            ) : (
-              logs.map((log, idx) => (
-                <div key={idx} style={{ marginBottom: "4px" }}>
-                  {log}
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
+                {logs.length === 0 ? (
+                  <Text color="gray.600">Logs will appear here...</Text>
+                ) : (
+                  logs.map((log, idx) => (
+                    <Box key={idx} mb="1" whiteSpace="pre-wrap">
+                      {log}
+                    </Box>
+                  ))
+                )}
+              </Box>
+            </Box>
+          </VStack>
+        </Box>
+      </Box>
     </>
   );
 }

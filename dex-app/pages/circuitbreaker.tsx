@@ -5,7 +5,7 @@ import { useAddress } from "@thirdweb-dev/react";
 import { useCircuitBreaker } from "@/hooks/useCircuitBreaker";
 import Navbar from "@/components/Navbar";
 import CircuitBreakerComponent from "@/components/CircuitBreakerComponent";
-import { Box, useToast } from "@chakra-ui/react";
+import { Box, useToast, Text, VStack, HStack, Grid, Button, Spinner } from "@chakra-ui/react";
 
 export default function CircuitBreakerPage() {
   const address = useAddress();
@@ -223,182 +223,311 @@ export default function CircuitBreakerPage() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <Navbar />
+      <Box minH="100vh">
+        <Navbar />
 
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", minHeight: "100vh", backgroundColor: "#f7fafc", padding: "32px 0", gap: "32px" }}>
-        <Box
-          maxW="600px"
-          w="full"
-          px="6"
-          py="8"
-          bg="white"
-          rounded="xl"
-          boxShadow="lg"
-        >
-          <h2 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "20px" }}>
-            Circuit Breaker Control
-          </h2>
+        <Box minH="calc(100vh - 80px)" py="10" px="5">
+          <VStack spacing="6" maxW="900px" mx="auto">
+            {/* Header */}
+            <VStack spacing="2" textAlign="center">
+              <Text
+                fontSize={{ base: "3xl", md: "4xl" }}
+                fontWeight="800"
+                bgGradient="linear(to-r, #6495ED, #88b8ff)"
+                bgClip="text"
+                letterSpacing="tight"
+              >
+                Circuit Breaker Control
+              </Text>
+              <Text fontSize="md" color="gray.400" fontWeight="500">
+                Manage system protection and rate limiting
+              </Text>
+            </VStack>
 
-          <div style={{ marginBottom: "20px", padding: "15px", backgroundColor: "#f7fafc", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-            <p style={{ marginBottom: "10px" }}>
-              <strong>Operational:</strong>{" "}
-              <span style={{ fontSize: "16px", fontWeight: "bold", color: isOperational ? "#22863a" : "#cb2431" }}>
-                {isOperational ? "✓ Yes" : "✗ No"}
-              </span>
-            </p>
-            <p style={{ marginBottom: "10px" }}>
-              <strong>Rate Limited:</strong>{" "}
-              <span style={{ fontSize: "16px", fontWeight: "bold", color: isRateLimited ? "#cb2431" : "#22863a" }}>
-                {isRateLimited ? "✓ Yes" : "✗ No"}
-              </span>
-            </p>
-            <p style={{ marginBottom: "10px" }}>
-              <strong>Rate Limit Cooldown:</strong> {rateLimitCooldownPeriod} seconds
-            </p>
-            <p style={{ marginBottom: "10px" }}>
-              <strong>Last Rate Limit:</strong> {formatTimestamp(lastRateLimitTimestamp)}
-            </p>
-            <p style={{ marginBottom: "0" }}>
-              <strong>Grace Period Ends:</strong> {formatTimestamp(gracePeriodEndTimestamp)}
-            </p>
-            <p style={{ marginTop: "8px", marginBottom: "0" }}>
-              <strong>Contract Ready:</strong> {isReady ? "✓ Yes" : "✗ No"}
-            </p>
-          </div>
-
-          {error && (
-            <div style={{ padding: "12px", backgroundColor: "#fed7d7", borderRadius: "6px", marginBottom: "15px", color: "#c53030", border: "1px solid #fc8181" }}>
-              <strong>Error:</strong> {error}
-            </div>
-          )}
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-            <button
-              onClick={handleLoadStatus}
-              disabled={loading}
-              style={{
-                padding: "12px",
-                backgroundColor: "#9c27b0",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.6 : 1,
-                fontWeight: "500",
-              }}
+            {/* Status Card */}
+            <Box
+              w="full"
+              bg="rgba(15, 20, 40, 0.7)"
+              backdropFilter="blur(20px)"
+              borderRadius="3xl"
+              borderWidth="1px"
+              borderColor="rgba(100, 149, 237, 0.2)"
+              boxShadow="0 8px 32px 0 rgba(0, 0, 0, 0.37)"
+              p={{ base: "6", md: "8" }}
             >
-              {loading ? "Loading..." : "Load Status"}
-            </button>
+              <VStack spacing="5" align="stretch">
+                <Text fontSize="2xl" fontWeight="700" color="white">
+                  System Status
+                </Text>
 
-            <button
-              onClick={handleToggleOperational}
-              disabled={loading}
-              style={{
-                padding: "12px",
-                backgroundColor: isOperational ? "#f44336" : "#4caf50",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.6 : 1,
-                fontWeight: "500",
-              }}
-            >
-              {loading ? "Loading..." : isOperational ? "Pause Breaker" : "Activate Breaker"}
-            </button>
+                <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap="4">
+                  <Box
+                    p="6"
+                    bg={isOperational ? "rgba(74, 222, 128, 0.1)" : "rgba(239, 68, 68, 0.1)"}
+                    borderRadius="xl"
+                    borderWidth="1px"
+                    borderColor={isOperational ? "rgba(74, 222, 128, 0.2)" : "rgba(239, 68, 68, 0.2)"}
+                  >
+                    <HStack justify="space-between" mb="3">
+                      <Text fontSize="sm" color="gray.400" fontWeight="600">
+                        Operational Status
+                      </Text>
+                      <Box
+                        w="3"
+                        h="3"
+                        borderRadius="full"
+                        bg={isOperational ? "#4ade80" : "#ef4444"}
+                        boxShadow={isOperational ? "0 0 10px #4ade80" : "0 0 10px #ef4444"}
+                      />
+                    </HStack>
+                    <Text fontSize="2xl" fontWeight="700" color={isOperational ? "#4ade80" : "#ef4444"}>
+                      {isOperational ? "Active" : "Paused"}
+                    </Text>
+                  </Box>
 
-            <button
-              onClick={handleCheckProtected}
-              disabled={loading}
-              style={{
-                padding: "12px",
-                backgroundColor: "#2196f3",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.6 : 1,
-                fontWeight: "500",
-              }}
-            >
-              {loading ? "Loading..." : "Check Protected"}
-            </button>
+                  <Box
+                    p="6"
+                    bg={isRateLimited ? "rgba(239, 68, 68, 0.1)" : "rgba(74, 222, 128, 0.1)"}
+                    borderRadius="xl"
+                    borderWidth="1px"
+                    borderColor={isRateLimited ? "rgba(239, 68, 68, 0.2)" : "rgba(74, 222, 128, 0.2)"}
+                  >
+                    <HStack justify="space-between" mb="3">
+                      <Text fontSize="sm" color="gray.400" fontWeight="600">
+                        Rate Limit Status
+                      </Text>
+                      <Box
+                        w="3"
+                        h="3"
+                        borderRadius="full"
+                        bg={isRateLimited ? "#ef4444" : "#4ade80"}
+                        boxShadow={isRateLimited ? "0 0 10px #ef4444" : "0 0 10px #4ade80"}
+                      />
+                    </HStack>
+                    <Text fontSize="2xl" fontWeight="700" color={isRateLimited ? "#ef4444" : "#4ade80"}>
+                      {isRateLimited ? "Limited" : "Normal"}
+                    </Text>
+                  </Box>
+                </Grid>
 
-            <button
-              onClick={handleAddProtected}
-              disabled={loading}
-              style={{
-                padding: "12px",
-                backgroundColor: "#4caf50",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.6 : 1,
-                fontWeight: "500",
-              }}
-            >
-              {loading ? "Loading..." : "Add Protected"}
-            </button>
+                <VStack spacing="3" align="stretch">
+                  <Box
+                    p="4"
+                    bg="rgba(100, 149, 237, 0.05)"
+                    borderRadius="xl"
+                    borderWidth="1px"
+                    borderColor="rgba(100, 149, 237, 0.1)"
+                  >
+                    <Text fontSize="sm" color="gray.400" fontWeight="600" mb="2">
+                      Rate Limit Cooldown Period
+                    </Text>
+                    <Text fontSize="lg" fontWeight="700" color="#6495ED">
+                      {rateLimitCooldownPeriod} seconds
+                    </Text>
+                  </Box>
 
-            <button
-              onClick={handleRemoveProtected}
-              disabled={loading}
-              style={{
-                padding: "12px",
-                backgroundColor: "#f44336",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.6 : 1,
-                fontWeight: "500",
-              }}
-            >
-              {loading ? "Loading..." : "Remove Protected"}
-            </button>
+                  <Box
+                    p="4"
+                    bg="rgba(100, 149, 237, 0.05)"
+                    borderRadius="xl"
+                    borderWidth="1px"
+                    borderColor="rgba(100, 149, 237, 0.1)"
+                  >
+                    <Text fontSize="sm" color="gray.400" fontWeight="600" mb="2">
+                      Last Rate Limit Triggered
+                    </Text>
+                    <Text fontSize="sm" fontWeight="600" color="white">
+                      {formatTimestamp(lastRateLimitTimestamp)}
+                    </Text>
+                  </Box>
 
-            <button
-              onClick={handleStartGracePeriod}
-              disabled={loading}
-              style={{
-                padding: "12px",
-                backgroundColor: "#ff9800",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.6 : 1,
-                fontWeight: "500",
-              }}
-            >
-              {loading ? "Loading..." : "Start Grace Period"}
-            </button>
+                  <Box
+                    p="4"
+                    bg="rgba(100, 149, 237, 0.05)"
+                    borderRadius="xl"
+                    borderWidth="1px"
+                    borderColor="rgba(100, 149, 237, 0.1)"
+                  >
+                    <Text fontSize="sm" color="gray.400" fontWeight="600" mb="2">
+                      Grace Period Ends
+                    </Text>
+                    <Text fontSize="sm" fontWeight="600" color="white">
+                      {formatTimestamp(gracePeriodEndTimestamp)}
+                    </Text>
+                  </Box>
 
-            <button
-              onClick={handleOverrideRateLimit}
-              disabled={loading}
-              style={{
-                padding: "12px",
-                backgroundColor: "#ff5722",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.6 : 1,
-                fontWeight: "500",
-              }}
+                  <HStack justify="space-between" p="4" bg="rgba(100, 149, 237, 0.05)" borderRadius="xl">
+                    <Text fontSize="sm" color="gray.400" fontWeight="600">
+                      Contract Status
+                    </Text>
+                    <HStack>
+                      <Box
+                        w="2"
+                        h="2"
+                        borderRadius="full"
+                        bg={isReady ? "#4ade80" : "#ef4444"}
+                        boxShadow={isReady ? "0 0 10px #4ade80" : "0 0 10px #ef4444"}
+                      />
+                      <Text fontSize="sm" fontWeight="600" color={isReady ? "#4ade80" : "#ef4444"}>
+                        {isReady ? "Ready" : "Not Ready"}
+                      </Text>
+                    </HStack>
+                  </HStack>
+                </VStack>
+
+                {error && (
+                  <Box
+                    p="4"
+                    bg="rgba(239, 68, 68, 0.1)"
+                    borderRadius="xl"
+                    borderWidth="1px"
+                    borderColor="rgba(239, 68, 68, 0.3)"
+                  >
+                    <Text fontSize="sm" color="#ef4444" fontWeight="600">
+                      Error: {error}
+                    </Text>
+                  </Box>
+                )}
+              </VStack>
+            </Box>
+
+            {/* Control Actions Card */}
+            <Box
+              w="full"
+              bg="rgba(15, 20, 40, 0.7)"
+              backdropFilter="blur(20px)"
+              borderRadius="3xl"
+              borderWidth="1px"
+              borderColor="rgba(100, 149, 237, 0.2)"
+              boxShadow="0 8px 32px 0 rgba(0, 0, 0, 0.37)"
+              p={{ base: "6", md: "8" }}
             >
-              {loading ? "Loading..." : "Override Rate Limit"}
-            </button>
-          </div>
+              <VStack spacing="5" align="stretch">
+                <Text fontSize="2xl" fontWeight="700" color="white">
+                  Control Actions
+                </Text>
+
+                <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap="3">
+                  <Button
+                    onClick={handleLoadStatus}
+                    isDisabled={loading}
+                    h="12"
+                    bgGradient="linear(135deg, #a855f7 0%, #9333ea 100%)"
+                    color="white"
+                    _hover={{
+                      transform: "translateY(-2px)",
+                      boxShadow: "0 0 20px rgba(168, 85, 247, 0.5)",
+                    }}
+                  >
+                    {loading ? <Spinner size="sm" /> : "Load Status"}
+                  </Button>
+
+                  <Button
+                    onClick={handleToggleOperational}
+                    isDisabled={loading}
+                    h="12"
+                    bgGradient={
+                      isOperational
+                        ? "linear(135deg, #ef4444 0%, #dc2626 100%)"
+                        : "linear(135deg, #4ade80 0%, #22c55e 100%)"
+                    }
+                    color="white"
+                    _hover={{
+                      transform: "translateY(-2px)",
+                      boxShadow: isOperational
+                        ? "0 0 20px rgba(239, 68, 68, 0.5)"
+                        : "0 0 20px rgba(74, 222, 128, 0.5)",
+                    }}
+                  >
+                    {loading ? <Spinner size="sm" /> : isOperational ? "Pause Breaker" : "Activate Breaker"}
+                  </Button>
+
+                  <Button
+                    onClick={handleCheckProtected}
+                    isDisabled={loading}
+                    h="12"
+                    bg="rgba(100, 149, 237, 0.2)"
+                    color="#6495ED"
+                    borderWidth="1px"
+                    borderColor="rgba(100, 149, 237, 0.3)"
+                    _hover={{
+                      bg: "rgba(100, 149, 237, 0.3)",
+                      transform: "translateY(-2px)",
+                    }}
+                  >
+                    {loading ? <Spinner size="sm" /> : "Check Protected"}
+                  </Button>
+
+                  <Button
+                    onClick={handleAddProtected}
+                    isDisabled={loading}
+                    h="12"
+                    bgGradient="linear(135deg, #4ade80 0%, #22c55e 100%)"
+                    color="white"
+                    _hover={{
+                      transform: "translateY(-2px)",
+                      boxShadow: "0 0 20px rgba(74, 222, 128, 0.5)",
+                    }}
+                  >
+                    {loading ? <Spinner size="sm" /> : "Add Protected"}
+                  </Button>
+
+                  <Button
+                    onClick={handleRemoveProtected}
+                    isDisabled={loading}
+                    h="12"
+                    bgGradient="linear(135deg, #ef4444 0%, #dc2626 100%)"
+                    color="white"
+                    _hover={{
+                      transform: "translateY(-2px)",
+                      boxShadow: "0 0 20px rgba(239, 68, 68, 0.5)",
+                    }}
+                  >
+                    {loading ? <Spinner size="sm" /> : "Remove Protected"}
+                  </Button>
+
+                  <Button
+                    onClick={handleStartGracePeriod}
+                    isDisabled={loading}
+                    h="12"
+                    bgGradient="linear(135deg, #fb923c 0%, #f97316 100%)"
+                    color="white"
+                    _hover={{
+                      transform: "translateY(-2px)",
+                      boxShadow: "0 0 20px rgba(251, 146, 60, 0.5)",
+                    }}
+                  >
+                    {loading ? <Spinner size="sm" /> : "Start Grace Period"}
+                  </Button>
+
+                  <Button
+                    onClick={handleOverrideRateLimit}
+                    isDisabled={loading}
+                    h="12"
+                    gridColumn={{ base: "1", md: "1 / -1" }}
+                    bgGradient="linear(135deg, #6495ED 0%, #4a7dd9 100%)"
+                    color="white"
+                    _hover={{
+                      transform: "translateY(-2px)",
+                      boxShadow: "0 0 20px rgba(100, 149, 237, 0.5)",
+                    }}
+                  >
+                    {loading ? <Spinner size="sm" /> : "Override Rate Limit"}
+                  </Button>
+                </Grid>
+              </VStack>
+            </Box>
+
+            {/* Circuit Breaker Component */}
+            <Box w="full">
+              <CircuitBreakerComponent
+                provider={provider}
+                circuitBreakerContract={contract}
+              />
+            </Box>
+          </VStack>
         </Box>
-
-        <CircuitBreakerComponent
-          provider={provider}
-          circuitBreakerContract={contract}
-        />
-      </div>
+      </Box>
     </>
   );
 }
