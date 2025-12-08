@@ -44,9 +44,6 @@ It is the first DEX to offer truly oracle-enforced fair execution.
 - **Data:** FTSO Price Provider & FDC
 - **Execution:** Guarded Swap Validation Module & Smart Account Hooks
 
-## 🚀 Roadmap
-
-- **Phase 3:** Full FDC integration, on-chain liquidation alerts, AI-based oracle anomaly detection, and a mobile app.
 
 ---
 
