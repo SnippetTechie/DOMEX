@@ -2,7 +2,6 @@
 
 ![alt text](image.png)
 **Live App:** [domex-dex.vercel.app](https://domex-dex.vercel.app/)  
-**Frontend Repo:** [SnippetTechie/domex-dex](https://github.com/SnippetTechie/domex-dex)
 
 ## 🧭 Overview
 
